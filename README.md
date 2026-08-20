@@ -15,41 +15,7 @@ Assist developers in understanding programming errors.
 📖 Contextual Explanations — Explains why an error occurred.
 ⚡ Faster Debugging — Reduces repetitive manual error analysis.
 💻 Code Support — Can be extended to support multiple programming languages.
-🔄 How It Works
-User
-  ↓
-Submit Code
-  ↓
-Debugging Agent
-  ↓
-Analyze Code + Error
-  ↓
-Identify Possible Cause
-  ↓
-Generate Fix
-  ↓
-Explain the Error
-  ↓
-Display Result to User
-🧠 System Workflow
-
 The debugging agent processes the submitted source code and, when available, the associated error message. It analyzes the context to determine the likely cause of the problem and generates a suggested correction along with an explanation.
-
-Source Code
-     +
-Error Message
-     ↓
-Code Analysis
-     ↓
-AI Reasoning
-     ↓
-Error Identification
-     ↓
-Suggested Fix
-     +
-Explanation
-🛠️ Technologies Used
-
 Update these according to your actual implementation:
 
 Programming Language: Python
@@ -59,25 +25,7 @@ Frontend: HTML, CSS, JavaScript / React
 Code Analysis: AST / static analysis tools (if used)
 Tools: Git, GitHub, VS Code
 📂 Project Structure
-AI-Debugging-Agent/
-│
-├── app/
-│   ├── main.py
-│   ├── debugger.py
-│   └── analyzer.py
-│
-├── frontend/
-│   ├── index.html
-│   ├── style.css
-│   └── script.js
-│
-├── tests/
-│
-├── requirements.txt
-├── README.md
-└── .gitignore
-
-Modify the structure based on your actual project.
+AI-Debugging-Agent
 
 🚀 Example
 Input
