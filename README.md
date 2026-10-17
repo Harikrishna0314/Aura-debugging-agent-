@@ -18,7 +18,6 @@ The project focuses on making debugging more approachable for students, beginner
 - [Getting Started](#-getting-started)
 - [Current Scope and Future Improvements](#-current-scope-and-future-improvements)
 - [Contributing](#-contributing)
-- [Author](#-author)
 
 ## 🌟 Overview
 
@@ -156,14 +155,6 @@ Ideas, bug reports, and improvements are welcome.
 5. Open a pull request describing the problem and the proposed solution.
 
 Please do not include private source code, credentials, or sensitive data in debugging examples.
-
-## 👨‍💻 Author
-
-**S. Harikrishna**  
-AI & Data Science Student | Java Developer | AI/ML Enthusiast
-
-- GitHub: [@Harikrishna0314](https://github.com/Harikrishna0314)
-- Project repository: [Aura Debugging Agent](https://github.com/Harikrishna0314/Aura-debugging-agent-)
 
 ---
 
