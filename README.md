@@ -123,9 +123,25 @@ Open the live project:
 
 ### Run locally
 
-Local setup instructions depend on the dependencies and scripts defined in the repository. To avoid giving incorrect commands, first inspect the project configuration and follow its documented package manager, environment-variable, and start scripts.
+The application source and its detailed setup guide are in [`Debugging agent/`](Debugging%20agent/README.md).
 
-If the project uses API credentials, keep them in local environment variables or a private environment configuration file. **Never commit API keys, access tokens, or other secrets to GitHub.**
+**Requirements:** Node.js 20.9+, npm, and a valid Z.AI API-platform API key.
+
+```bash
+cd "Debugging agent"
+npm install
+cp .env.example .env
+# Edit .env and set ZAI_API_KEY to your private API key.
+npm run db:generate
+npm run db:push
+npm run dev
+```
+
+Then open http://localhost:3000.
+
+The debugger uses the official Z.AI chat-completions API. Its default endpoint is `https://api.z.ai/api/paas/v4/chat/completions`, and its default model is `glm-4.6`. You can override these with `ZAI_API_URL` and `ZAI_MODEL`. For hosted deployments, configure `ZAI_API_KEY` in the host's server-side environment/secrets settings and redeploy. `DATABASE_URL` is also required for Prisma-backed history.
+
+**Never commit your real `.env`, API keys, access tokens, or other secrets to GitHub.**
 
 ## 🔮 Current Scope and Future Improvements
 
