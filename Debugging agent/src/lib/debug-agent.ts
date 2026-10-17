@@ -1,4 +1,3 @@
-import ZAI from "z-ai-web-dev-sdk";
 import type { DebugIssue, DebugResult, IssueSeverity, IssueType } from "./debug-types";
 
 /**
@@ -145,7 +144,19 @@ export async function runDebugAgent({
   language,
   hint,
 }: DebugAgentInput): Promise<DebugResult> {
-  const zai = await ZAI.create();
+  // Use the official API endpoint with a server-side API key. This avoids the
+  // platform-specific X-Token authentication used by the web-dev SDK.
+  const apiKey = process.env.ZAI_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error(
+      "AI provider is not configured. Add ZAI_API_KEY to the server/deployment environment, then redeploy."
+    );
+  }
+
+  const apiUrl =
+    process.env.ZAI_API_URL?.trim() ||
+    "https://api.z.ai/api/paas/v4/chat/completions";
+  const model = process.env.ZAI_MODEL?.trim() || "glm-4.6";
 
   const userMessage = [
     `Language: ${language}`,
@@ -160,14 +171,50 @@ export async function runDebugAgent({
     .filter(Boolean)
     .join("\n");
 
-  const completion = await zai.chat.completions.create({
-    messages: [
-      { role: "assistant", content: SYSTEM_PROMPT },
-      { role: "user", content: userMessage },
-    ],
-    thinking: { type: "disabled" },
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userMessage },
+      ],
+      thinking: { type: "disabled" },
+    }),
+    signal: AbortSignal.timeout(55_000),
   });
 
-  const raw = completion.choices[0]?.message?.content ?? "";
+  const payload = (await response.json().catch(() => ({}))) as {
+    error?: { message?: string } | string;
+    choices?: Array<{ message?: { content?: string | null } }>;
+  };
+
+  if (!response.ok) {
+    const providerError =
+      typeof payload.error === "string"
+        ? payload.error
+        : payload.error?.message;
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        "AI provider authentication failed. Check that ZAI_API_KEY is a valid API-platform key for the configured endpoint; do not use a website session token."
+      );
+    }
+    throw new Error(
+      providerError
+        ? `AI provider request failed (${response.status}): ${providerError}`
+        : `AI provider request failed with status ${response.status}.`
+    );
+  }
+
+  const raw = payload.choices?.[0]?.message?.content ?? "";
+  if (!raw.trim()) {
+    throw new Error(
+      "AI provider returned an empty response. Check the configured model and API account access."
+    );
+  }
   return safeParse(raw, language);
 }
