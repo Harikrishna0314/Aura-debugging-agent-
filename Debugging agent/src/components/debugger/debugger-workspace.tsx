@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   AlertCircle,
   Bug,
+  GitCompareArrows,
   CheckCircle2,
   ChevronDown,
   Eraser,
@@ -61,6 +62,7 @@ import { cn } from "@/lib/utils";
 import { CodeBlock } from "./code-block";
 import { IssueCard } from "./issue-card";
 import { HistoryPanel } from "./history-panel";
+import { DiffViewer } from "./diff-viewer";
 
 type ResultView = DebugResult & { originalCode: string };
 
@@ -82,6 +84,7 @@ export function DebuggerWorkspace() {
   const [result, setResult] = React.useState<ResultView | null>(null);
   const [activeTab, setActiveTab] = React.useState("fixed");
   const [showOriginal, setShowOriginal] = React.useState(false);
+  const [fixDecision, setFixDecision] = React.useState<"accepted" | "rejected" | null>(null);
 
   const [history, setHistory] = React.useState<DebugSessionRecord[]>([]);
   const [activeHistoryId, setActiveHistoryId] = React.useState<string | null>(
@@ -114,6 +117,7 @@ export function DebuggerWorkspace() {
     setLoading(true);
     setError(null);
     setActiveHistoryId(null);
+    setFixDecision(null);
     try {
       const res = await fetch("/api/debug", {
         method: "POST",
@@ -126,7 +130,8 @@ export function DebuggerWorkspace() {
       }
       const r = data.result as DebugResult;
       setResult({ ...r, originalCode: code });
-      setActiveTab(r.fixedCode ? "fixed" : "issues");
+      setFixDecision(null);
+      setActiveTab(r.fixedCode ? "diff" : "issues");
       toast({
         title: r.hasBugs ? "Analysis complete" : "Code looks clean",
         description: r.hasBugs
@@ -152,6 +157,7 @@ export function DebuggerWorkspace() {
     setResult(null);
     setError(null);
     setActiveHistoryId(null);
+    setFixDecision(null);
     toast({ title: "Sample loaded", description: sample.title });
   };
 
@@ -161,6 +167,7 @@ export function DebuggerWorkspace() {
     setResult(null);
     setError(null);
     setActiveHistoryId(null);
+    setFixDecision(null);
   };
 
   const handleSelectHistory = (s: DebugSessionRecord) => {
@@ -178,10 +185,23 @@ export function DebuggerWorkspace() {
     });
     setActiveHistoryId(s.id);
     setError(null);
-    setActiveTab(s.fixedCode ? "fixed" : "issues");
+    setFixDecision(null);
+    setActiveTab(s.fixedCode ? "diff" : "issues");
     if (typeof window !== "undefined") {
       document.getElementById("workspace")?.scrollIntoView({ behavior: "smooth" });
     }
+  };
+
+  const handleAcceptFix = () => {
+    if (!result?.fixedCode) return;
+    setCode(result.fixedCode);
+    setFixDecision("accepted");
+    toast({ title: "Fix accepted", description: "The proposed code is now in the editor. The original remains in the diff." });
+  };
+
+  const handleRejectFix = () => {
+    setFixDecision("rejected");
+    toast({ title: "Fix rejected", description: "Your editor contents were left unchanged." });
   };
 
   const charCount = code.length;
@@ -326,6 +346,9 @@ export function DebuggerWorkspace() {
                 setActiveTab={setActiveTab}
                 showOriginal={showOriginal}
                 setShowOriginal={setShowOriginal}
+                decision={fixDecision}
+                onAcceptFix={handleAcceptFix}
+                onRejectFix={handleRejectFix}
               />
             )}
           </div>
@@ -398,12 +421,18 @@ function ResultView({
   setActiveTab,
   showOriginal,
   setShowOriginal,
+  decision,
+  onAcceptFix,
+  onRejectFix,
 }: {
   result: ResultView;
   activeTab: string;
   setActiveTab: (t: string) => void;
   showOriginal: boolean;
   setShowOriginal: (v: boolean) => void;
+  decision: "accepted" | "rejected" | null;
+  onAcceptFix: () => void;
+  onRejectFix: () => void;
 }) {
   const counts = countBySeverity(result);
 
@@ -461,6 +490,10 @@ function ResultView({
         className="mt-4 flex min-h-0 flex-1 flex-col"
       >
         <TabsList className="self-start">
+          <TabsTrigger value="diff" className="gap-1.5">
+            <GitCompareArrows className="h-3.5 w-3.5" />
+            Diff
+          </TabsTrigger>
           <TabsTrigger value="fixed" className="gap-1.5">
             <Play className="h-3.5 w-3.5" />
             Fixed code
@@ -479,6 +512,20 @@ function ResultView({
             Logic
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="diff" className="mt-3 min-h-0 flex-1 data-[state=inactive]:hidden">
+          {result.fixedCode ? (
+            <DiffViewer
+              originalCode={result.originalCode}
+              fixedCode={result.fixedCode}
+              decision={decision}
+              onAccept={onAcceptFix}
+              onReject={onRejectFix}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">The agent did not return corrected code to compare.</p>
+          )}
+        </TabsContent>
 
         <TabsContent
           value="fixed"
